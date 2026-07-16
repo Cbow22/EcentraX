@@ -252,6 +252,15 @@
     .empty-state { text-align:center; padding:52px 20px; color:var(--muted); }
     .modal-actions { display:flex; gap:10px; margin-top:18px; }
 
+
+    .account-choice-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:20px 0 8px; }
+    .account-choice { border:1px solid var(--border); background:#0d1022; border-radius:16px; padding:20px; text-align:left; color:var(--text); cursor:pointer; transition:.2s ease; }
+    .account-choice:hover { transform:translateY(-2px); border-color:#5d67ff; background:#121632; }
+    .account-choice-icon { width:42px; height:42px; border-radius:12px; display:grid; place-items:center; margin-bottom:14px; background:linear-gradient(135deg,#775cff,#4ac7ff); font-size:1.2rem; }
+    .account-choice h4 { margin:0 0 7px; font-size:1rem; }
+    .account-choice p { margin:0; color:var(--muted); font-size:.86rem; line-height:1.55; }
+    .account-badge { display:inline-flex; align-items:center; gap:7px; border:1px solid var(--border); border-radius:999px; padding:6px 10px; color:#dfe2ff; background:#11152d; font-size:.78rem; }
+
     @media (max-width: 900px) {
       .nav-links { display:none; }
       .hero, .ecosystem, .dashboard-grid { grid-template-columns: 1fr; }
@@ -260,6 +269,7 @@
       .cards { grid-template-columns: 1fr; }
       .cta { align-items:flex-start; flex-direction:column; }
       .dashboard-shell { grid-template-columns: 1fr; }
+      .account-choice-grid { grid-template-columns:1fr; }
       .sidebar { display:none; }
     }
 
@@ -290,7 +300,7 @@
         </nav>
         <div class="nav-actions">
           <button class="btn" onclick="openSignIn()">Sign in</button>
-          <button class="btn btn-primary" onclick="openOnboarding()">Get started</button>
+          <button class="btn btn-primary" onclick="openAccountChoice()">Get started</button>
         </div>
       </div>
     </header>
@@ -302,7 +312,7 @@
           <h1>Find the right <span class="gradient">business connection.</span></h1>
           <p>EcentraX helps companies discover, evaluate, and connect with vendors, partners, and strategic opportunities based on real business fit—not just keywords.</p>
           <div class="hero-actions">
-            <button class="btn btn-primary" onclick="openOnboarding()">Create company profile</button>
+            <button class="btn btn-primary" onclick="openAccountChoice()">Create an account</button>
             <button class="btn" onclick="showDashboard()">View first prototype dashboard</button>
           </div>
           <div class="mini-note">Designed for local businesses, growing teams, and enterprise organizations.</div>
@@ -359,7 +369,7 @@
 
       <section class="container cta" id="about">
         <div><h2>Built to close the gap between businesses.</h2><p>From local companies to enterprise teams, EcentraX makes the first connection easier and more informed.</p></div>
-        <button class="btn btn-primary" onclick="openOnboarding()">Join the early access list</button>
+        <button class="btn btn-primary" onclick="openAccountChoice()">Join the early access list</button>
       </section>
     </main>
 
@@ -433,9 +443,29 @@
   </div>
 
   <div class="modal" id="modal" onclick="if(event.target===this) closeModal()">
+    <div class="modal-card" id="accountChoiceCard" style="display:none">
+      <h3>Choose your account</h3><p>Create the type of profile that best matches how you will use EcentraX.</p>
+      <div class="account-choice-grid">
+        <button class="account-choice" onclick="openPersonalOnboarding()"><div class="account-choice-icon">👤</div><h4>Personal account</h4><p>Build your professional profile, represent your role, and connect with the right people and companies.</p></button>
+        <button class="account-choice" onclick="openOnboarding()"><div class="account-choice-icon">🏢</div><h4>Business account</h4><p>Create a company profile, discover partners, manage opportunities, and designate a primary contact.</p></button>
+      </div>
+      <div class="modal-actions"><button class="btn" style="width:100%" onclick="closeModal()">Cancel</button></div>
+    </div>
+
+    <div class="modal-card" id="personalOnboardingCard" style="display:none">
+      <h3>Create your personal account</h3><p>Set up a professional profile that can be connected to a business now or later.</p>
+      <div class="form-grid"><div class="field"><label>First name</label><input id="personalFirstName" placeholder="First name"></div><div class="field"><label>Last name</label><input id="personalLastName" placeholder="Last name"></div></div>
+      <div class="field"><label>Email address</label><input id="personalEmail" type="email" placeholder="you@email.com"></div>
+      <div class="form-grid"><div class="field"><label>Job title</label><input id="personalJobTitle" placeholder="Analyst, Founder, Manager, etc."></div><div class="field"><label>Current company</label><input id="personalCompany" placeholder="Optional"></div></div>
+      <div class="field"><label>What are you looking for?</label><select id="personalGoal"><option>Strategic business connections</option><option>Vendors and service providers</option><option>Partnership opportunities</option><option>Career and professional networking</option><option>New customers or clients</option></select></div>
+      <div class="field"><label>Password</label><input id="personalPassword" type="password" placeholder="Create a password"></div>
+      <div class="notice">Prototype only: this information is saved locally in your browser and is not secure authentication yet.</div>
+      <div class="modal-actions"><button class="btn btn-primary" style="flex:1" onclick="finishPersonalOnboarding()">Create personal account</button><button class="btn" onclick="openAccountChoice()">Back</button></div>
+    </div>
+
     <div class="modal-card" id="signInCard">
       <h3>Welcome back</h3><p>Enter the first prototype workspace.</p>
-      <div class="field"><label>Business email</label><input type="email" placeholder="you@company.com"></div>
+      <div class="field"><label>Email address</label><input type="email" placeholder="you@email.com"></div>
       <div class="field"><label>Password</label><input type="password" placeholder="••••••••"></div>
       <div class="modal-actions"><button class="btn btn-primary" style="flex:1" onclick="showDashboard()">Enter prototype</button><button class="btn" onclick="closeModal()">Cancel</button></div>
     </div>
@@ -465,20 +495,40 @@
   <script>
     const landing=document.getElementById('landing'), dashboard=document.getElementById('dashboard'), modal=document.getElementById('modal');
     let currentStep=0;
-    function openSignIn(){document.getElementById('signInCard').style.display='block';document.getElementById('onboardingCard').style.display='none';modal.style.display='flex';}
-    function openOnboarding(){document.getElementById('signInCard').style.display='none';document.getElementById('onboardingCard').style.display='block';currentStep=0;renderStep();modal.style.display='flex';}
+    function hideModalCards(){document.querySelectorAll('#modal .modal-card').forEach(card=>card.style.display='none');}
+    function openAccountChoice(){hideModalCards();document.getElementById('accountChoiceCard').style.display='block';modal.style.display='flex';}
+    function openSignIn(){hideModalCards();document.getElementById('signInCard').style.display='block';modal.style.display='flex';}
+    function openPersonalOnboarding(){hideModalCards();document.getElementById('personalOnboardingCard').style.display='block';modal.style.display='flex';}
+    function openOnboarding(){hideModalCards();document.getElementById('onboardingCard').style.display='block';currentStep=0;renderStep();modal.style.display='flex';}
     function closeModal(){modal.style.display='none';}
     function renderStep(){document.querySelectorAll('.onboarding-step').forEach((el,i)=>el.classList.toggle('active',i===currentStep));document.querySelectorAll('.step-dot').forEach((el,i)=>el.classList.toggle('active',i<=currentStep));document.getElementById('backBtn').style.display=currentStep?'inline-block':'none';document.getElementById('nextBtn').textContent=currentStep===2?'Create profile':'Continue';}
     function changeStep(direction){if(direction===1&&currentStep===0&&!document.getElementById('companyName').value.trim()){showToast('Enter a company name to continue');return;} if(direction===1&&currentStep===2){finishOnboarding();return;} currentStep=Math.max(0,Math.min(2,currentStep+direction));renderStep();}
-    function finishOnboarding(){const company=document.getElementById('companyName').value.trim()||"Cameron's Construction LLC";const contact=document.getElementById('contactName').value.trim()||'Cameron Bowden';localStorage.setItem('ecentraxCompany',company);localStorage.setItem('ecentraxContact',contact);document.getElementById('profileCompany').value=company;document.getElementById('profileContact').value=contact;showDashboard();showToast('Company profile created');}
-    function showDashboard(){closeModal();landing.style.display='none';dashboard.style.display='block';switchView('overview');window.scrollTo(0,0);}
+    function finishOnboarding(){const company=document.getElementById('companyName').value.trim()||"Cameron's Construction LLC";const contact=document.getElementById('contactName').value.trim()||'Cameron Bowden';localStorage.setItem('ecentraxAccountType','business');localStorage.setItem('ecentraxCompany',company);localStorage.setItem('ecentraxContact',contact);document.getElementById('profileCompany').value=company;document.getElementById('profileContact').value=contact;showDashboard();showToast('Company profile created');}
+    function finishPersonalOnboarding(){
+      const first=document.getElementById('personalFirstName').value.trim(), last=document.getElementById('personalLastName').value.trim(), email=document.getElementById('personalEmail').value.trim();
+      if(!first||!last||!email){showToast('Enter your name and email to continue');return;}
+      const personal={name:(first+' '+last).trim(),email,jobTitle:document.getElementById('personalJobTitle').value.trim(),company:document.getElementById('personalCompany').value.trim(),goal:document.getElementById('personalGoal').value};
+      localStorage.setItem('ecentraxAccountType','personal');localStorage.setItem('ecentraxPersonal',JSON.stringify(personal));
+      applyAccountType();showDashboard();showToast('Personal account created');
+    }
+    function applyAccountType(){
+      const type=localStorage.getItem('ecentraxAccountType')||'business';
+      const badge=document.getElementById('accountBadge'), title=document.getElementById('dashboardTitle'), subtitle=document.getElementById('dashboardSubtitle');
+      if(type==='personal'){
+        let personal={};try{personal=JSON.parse(localStorage.getItem('ecentraxPersonal')||'{}')}catch(e){}
+        badge.textContent='Personal account';title.textContent='Welcome'+(personal.name?', '+personal.name.split(' ')[0]:'');subtitle.textContent='Your professional connections and business opportunities in one workspace.';
+        if(personal.company)document.getElementById('profileCompany').value=personal.company;
+        if(personal.name)document.getElementById('profileContact').value=personal.name;
+      }else{badge.textContent='Business account';title.textContent='Dashboard overview';subtitle.textContent='Your EcentraX business relationship workspace.';}
+    }
+    function showDashboard(){closeModal();applyAccountType();landing.style.display='none';dashboard.style.display='block';switchView('overview');window.scrollTo(0,0);}
     function showLanding(){dashboard.style.display='none';landing.style.display='block';window.scrollTo(0,0);}
     function switchView(view){document.querySelectorAll('.view-section').forEach(el=>el.classList.remove('active'));document.getElementById('view-'+view).classList.add('active');document.querySelectorAll('.side-link').forEach(el=>el.classList.toggle('active',el.dataset.view===view));}
     document.querySelectorAll('.side-link').forEach(link=>link.addEventListener('click',e=>{e.preventDefault();switchView(link.dataset.view);}));
     function showToast(message){const toast=document.getElementById('toast');toast.textContent=message;toast.style.display='block';clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>toast.style.display='none',2400);}
     function connectCompany(btn,name){btn.textContent='Request sent';btn.disabled=true;showToast('Connection request sent to '+name);}
     function saveProfile(){localStorage.setItem('ecentraxCompany',document.getElementById('profileCompany').value);localStorage.setItem('ecentraxContact',document.getElementById('profileContact').value);showToast('Company profile saved');}
-    const savedCompany=localStorage.getItem('ecentraxCompany'), savedContact=localStorage.getItem('ecentraxContact');if(savedCompany)document.getElementById('profileCompany').value=savedCompany;if(savedContact)document.getElementById('profileContact').value=savedContact;
+    const savedCompany=localStorage.getItem('ecentraxCompany'), savedContact=localStorage.getItem('ecentraxContact');if(savedCompany)document.getElementById('profileCompany').value=savedCompany;if(savedContact)document.getElementById('profileContact').value=savedContact;applyAccountType();
   </script>
 </body>
 </html>
